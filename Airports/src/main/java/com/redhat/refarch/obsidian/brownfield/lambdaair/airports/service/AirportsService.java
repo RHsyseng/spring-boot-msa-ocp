@@ -6,7 +6,6 @@ import com.redhat.refarch.obsidian.brownfield.lambdaair.airports.model.Coordinat
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -30,7 +29,6 @@ public class AirportsService
 		{
 			InputStream inputStream = AirportsService.class.getResourceAsStream( "/airports.csv" );
 			CSVReader reader = new CSVReader( new InputStreamReader( inputStream ), '\t' );
-			DateTimeFormatter formatter = DateTimeFormatter.ofPattern( "HH:mm" );
 			String[] nextLine;
 			while( (nextLine = reader.readNext()) != null )
 			{
