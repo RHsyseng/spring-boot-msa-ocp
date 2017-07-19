@@ -1,0 +1,23 @@
+{
+  "name": "lambda-air",
+  "authors": [
+    "Babak Mozaffari <bmozaffa@redhat.com>"
+  ],
+  "description": "Lambda Air reservation and sales system",
+  "main": "index.html",
+  "license": "MIT",
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "patternfly": "^3.23.2",
+    "jquery-ui": "^1.12.1",
+    "bootstrap-table": "^1.11.1"
+  }
+}

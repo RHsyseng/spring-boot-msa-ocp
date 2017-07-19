@@ -1,0 +1,20 @@
+{
+  "kind": "PersistentVolume",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "groovy"
+  },
+  "spec": {
+    "capacity": {
+      "storage": "1GiB"
+    },
+    "accessModes": [
+      "ReadWriteOnce"
+    ],
+    "persistentVolumeReclaimPolicy": "Recycle",
+    "nfs": {
+      "path": "/mnt/zuul/volume",
+      "server": "10.19.137.31"
+    }
+  }
+}

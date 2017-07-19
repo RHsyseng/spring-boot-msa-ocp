@@ -1,0 +1,339 @@
+apiVersion: v1
+kind: Template
+labels:
+  template: zipkin-mysql-template
+message: |-
+  The following service(s) have been created in your project: ${DATABASE_SERVICE_NAME}.
+
+         Username: ${MYSQL_USER}
+         Password: ${MYSQL_PASSWORD}
+    Database Name: ${MYSQL_DATABASE}
+   Connection URL: mysql://${DATABASE_SERVICE_NAME}:3306/
+
+  For more information about using this template, including OpenShift considerations, see https://github.com/sclorg/mysql-container/blob/master/5.7/README.md.
+metadata:
+  annotations:
+    description: |-
+      MySQL database service, with persistent storage. For more information about using this template, including OpenShift considerations, see https://github.com/sclorg/mysql-container/blob/master/5.7/README.md.
+
+      NOTE: Scaling to more than one replica is not supported. You must have persistent volumes available in your cluster to use this template.
+objects:
+- apiVersion: v1
+  kind: Secret
+  metadata:
+    name: ${DATABASE_SERVICE_NAME}
+    labels:
+      project: zipkin-mysql
+  stringData:
+    database-password: ${MYSQL_PASSWORD}
+    database-root-password: ${MYSQL_ROOT_PASSWORD}
+    database-user: ${MYSQL_USER}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      project: zipkin-mysql
+    name: zipkin
+  spec:
+    ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 9411
+    selector:
+      project: zipkin-mysql
+    type: LoadBalancer
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: ${DATABASE_SERVICE_NAME}
+    labels:
+      project: zipkin-mysql
+  spec:
+    ports:
+    - name: mysql
+      port: 3306
+    selector:
+      name: ${DATABASE_SERVICE_NAME}
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: ${DATABASE_SERVICE_NAME}
+    labels:
+      project: zipkin-mysql
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: ${VOLUME_CAPACITY}
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    labels:
+      project: zipkin-mysql
+    name: zipkin-mysql-cnf
+  data:
+    custom.cnf: |
+      [mysqld]
+      sql-mode=""
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    labels:
+      project: zipkin-mysql
+    name: zipkin-mysql-initdb
+  data:
+    init.sql: |
+      CREATE TABLE IF NOT EXISTS zipkin_spans (
+        `trace_id` BIGINT NOT NULL,
+        `id` BIGINT NOT NULL,
+        `name` VARCHAR(255) NOT NULL,
+        `parent_id` BIGINT,
+        `debug` BIT(1),
+        `start_ts` BIGINT COMMENT 'Span.timestamp(): epoch micros used for endTs query and to implement TTL',
+        `duration` BIGINT COMMENT 'Span.duration(): micros used for minDuration and maxDuration query'
+      ) ENGINE=InnoDB ROW_FORMAT=COMPRESSED;
+
+      ALTER TABLE zipkin_spans ADD UNIQUE KEY(`trace_id`, `id`) COMMENT 'ignore insert on duplicate';
+      ALTER TABLE zipkin_spans ADD INDEX(`trace_id`, `id`) COMMENT 'for joining with zipkin_annotations';
+      ALTER TABLE zipkin_spans ADD INDEX(`trace_id`) COMMENT 'for getTracesByIds';
+      ALTER TABLE zipkin_spans ADD INDEX(`name`) COMMENT 'for getTraces and getSpanNames';
+      ALTER TABLE zipkin_spans ADD INDEX(`start_ts`) COMMENT 'for getTraces ordering and range';
+
+      CREATE TABLE IF NOT EXISTS zipkin_annotations (
+        `trace_id` BIGINT NOT NULL COMMENT 'coincides with zipkin_spans.trace_id',
+        `span_id` BIGINT NOT NULL COMMENT 'coincides with zipkin_spans.id',
+        `a_key` VARCHAR(255) NOT NULL COMMENT 'BinaryAnnotation.key or Annotation.value if type == -1',
+        `a_value` BLOB COMMENT 'BinaryAnnotation.value(), which must be smaller than 64KB',
+        `a_type` INT NOT NULL COMMENT 'BinaryAnnotation.type() or -1 if Annotation',
+        `a_timestamp` BIGINT COMMENT 'Used to implement TTL; Annotation.timestamp or zipkin_spans.timestamp',
+        `endpoint_ipv4` INT COMMENT 'Null when Binary/Annotation.endpoint is null',
+        `endpoint_ipv6` BINARY(16) COMMENT 'Null when Binary/Annotation.endpoint is null, or no IPv6 address',
+        `endpoint_port` SMALLINT COMMENT 'Null when Binary/Annotation.endpoint is null',
+        `endpoint_service_name` VARCHAR(255) COMMENT 'Null when Binary/Annotation.endpoint is null'
+      ) ENGINE=InnoDB ROW_FORMAT=COMPRESSED;
+
+      ALTER TABLE zipkin_annotations ADD UNIQUE KEY(`trace_id`, `span_id`, `a_key`, `a_timestamp`) COMMENT 'Ignore insert on duplicate';
+      ALTER TABLE zipkin_annotations ADD INDEX(`trace_id`, `span_id`) COMMENT 'for joining with zipkin_spans';
+      ALTER TABLE zipkin_annotations ADD INDEX(`trace_id`) COMMENT 'for getTraces/ByIds';
+      ALTER TABLE zipkin_annotations ADD INDEX(`endpoint_service_name`) COMMENT 'for getTraces and getServiceNames';
+      ALTER TABLE zipkin_annotations ADD INDEX(`a_type`) COMMENT 'for getTraces';
+      ALTER TABLE zipkin_annotations ADD INDEX(`a_key`) COMMENT 'for getTraces';
+
+      CREATE TABLE IF NOT EXISTS zipkin_dependencies (
+        `day` DATE NOT NULL,
+        `parent` VARCHAR(255) NOT NULL,
+        `child` VARCHAR(255) NOT NULL,
+        `call_count` BIGINT
+      ) ENGINE=InnoDB ROW_FORMAT=COMPRESSED;
+
+      ALTER TABLE zipkin_dependencies ADD UNIQUE KEY(`day`, `parent`, `child`);
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      project: zipkin-mysql
+    name: zipkin
+  spec:
+    replicas: 1
+    selector:
+      project: zipkin-mysql
+    template:
+      metadata:
+        labels:
+          project: zipkin-mysql
+      spec:
+        containers:
+        - env:
+          - name: STORAGE_PORT_9042_TCP_ADDR
+            value: zipkin-cassandra:9411
+          - name: STORAGE_PORT_3306_TCP_ADDR
+            value: ${DATABASE_SERVICE_NAME}:3306
+          - name: MYSQL_USER
+            value: ${MYSQL_USER}
+          - name: MYSQL_PASS
+            value: ${MYSQL_PASSWORD}
+          - name: STORAGE_TYPE
+            value: mysql
+          - name: TRANSPORT_TYPE
+            value: http
+          - name: KUBERNETES_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          image: openzipkin/zipkin:1.19.2
+          name: zipkin
+          readinessProbe:
+            httpGet:
+              path: /api/v1/services
+              port: 9411
+            initialDelaySeconds: 5
+          resources:
+            limits:
+              cpu: "0"
+              memory: "0"
+            requests:
+              cpu: "0"
+              memory: "0"
+    triggers:
+    - type: ConfigChange
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      project: zipkin-mysql
+    name: ${DATABASE_SERVICE_NAME}
+  spec:
+    replicas: 1
+    selector:
+      name: ${DATABASE_SERVICE_NAME}
+    strategy:
+      type: Recreate
+      recreateParams:
+        post:
+          failurePolicy: Abort
+          execNewPod:
+            containerName: mysql
+            command:
+            - /bin/sh
+            - -c
+            - hostname && sleep 10 && /opt/rh/rh-mysql57/root/usr/bin/mysql -h $DATABASE_SERVICE_NAME -u $MYSQL_USER -D $MYSQL_DATABASE -p$MYSQL_PASSWORD -P 3306 < /docker-entrypoint-initdb.d/init.sql && echo Initialized database
+            env:
+            - name: DATABASE_SERVICE_NAME
+              value: ${DATABASE_SERVICE_NAME}
+            volumes:
+            - mysql-init-script
+    template:
+      metadata:
+        labels:
+          name: ${DATABASE_SERVICE_NAME}
+      spec:
+        containers:
+        - env:
+          - name: MYSQL_USER
+            valueFrom:
+              secretKeyRef:
+                key: database-user
+                name: ${DATABASE_SERVICE_NAME}
+          - name: MYSQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: database-password
+                name: ${DATABASE_SERVICE_NAME}
+          - name: MYSQL_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: database-root-password
+                name: ${DATABASE_SERVICE_NAME}
+          - name: MYSQL_DATABASE
+            value: ${MYSQL_DATABASE}
+          image: ' '
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            initialDelaySeconds: 30
+            tcpSocket:
+              port: 3306
+            timeoutSeconds: 1
+          name: mysql
+          ports:
+          - containerPort: 3306
+          readinessProbe:
+            exec:
+              command:
+              - /bin/sh
+              - -i
+              - -c
+              - MYSQL_PWD="$MYSQL_PASSWORD" mysql -h 127.0.0.1 -u $MYSQL_USER -D $MYSQL_DATABASE
+                -e 'SELECT 1'
+            initialDelaySeconds: 5
+            timeoutSeconds: 1
+          resources:
+            limits:
+              memory: ${MEMORY_LIMIT}
+          volumeMounts:
+          - mountPath: /var/lib/mysql/data
+            name: ${DATABASE_SERVICE_NAME}-data
+          - mountPath: /docker-entrypoint-initdb.d/
+            name: mysql-init-script
+          - mountPath: /etc/mysql/conf.d/
+            name: mysql-confd
+        volumes:
+        - name: ${DATABASE_SERVICE_NAME}-data
+          persistentVolumeClaim:
+            claimName: ${DATABASE_SERVICE_NAME}
+        - configMap:
+            name: zipkin-mysql-initdb
+          name: mysql-init-script
+        - configMap:
+            name: zipkin-mysql-cnf
+          name: mysql-confd
+    triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - mysql
+        from:
+          kind: ImageStreamTag
+          name: mysql:${MYSQL_VERSION}
+          namespace: ${NAMESPACE}
+      type: ImageChange
+    - type: ConfigChange
+- apiVersion: v1
+  kind: Route
+  metadata:
+    labels:
+      project: zipkin-mysql
+    name: zipkin
+  spec:
+    port:
+      targetPort: 9411
+    to:
+      kind: Service
+      name: zipkin
+parameters:
+- description: Maximum amount of memory the container can use.
+  displayName: Memory Limit
+  name: MEMORY_LIMIT
+  required: true
+  value: 512Mi
+- description: The OpenShift Namespace where the ImageStream resides.
+  displayName: Namespace
+  name: NAMESPACE
+  value: openshift
+- description: The name of the OpenShift Service exposed for the database.
+  displayName: Database Service Name
+  name: DATABASE_SERVICE_NAME
+  required: true
+  value: zipkin-mysql
+- description: Username for MySQL user that will be used for accessing the database.
+  displayName: MySQL Connection Username
+  name: MYSQL_USER
+  required: true
+  value: zipkin
+- description: Password for the MySQL connection user.
+  displayName: MySQL Connection Password
+  from: '[a-zA-Z0-9]{16}'
+  generate: expression
+  name: MYSQL_PASSWORD
+  required: true
+- description: Password for the MySQL root user.
+  displayName: MySQL root user Password
+  from: '[a-zA-Z0-9]{16}'
+  generate: expression
+  name: MYSQL_ROOT_PASSWORD
+  required: true
+- description: Name of the MySQL database accessed.
+  displayName: MySQL Database Name
+  name: MYSQL_DATABASE
+  required: true
+  value: zipkin
+- description: Volume space available for data, e.g. 512Mi, 2Gi.
+  displayName: Volume Capacity
+  name: VOLUME_CAPACITY
+  required: true
+  value: 1Gi
+- description: Version of MySQL image to be used (5.5, 5.6, 5.7, or latest).
+  displayName: Version of MySQL Image
+  name: MYSQL_VERSION
+  required: true
+  value: "5.7"

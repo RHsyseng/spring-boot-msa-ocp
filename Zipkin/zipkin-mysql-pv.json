@@ -1,0 +1,24 @@
+{
+  "kind": "PersistentVolume",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "zipkin-mysql-data"
+  },
+  "spec": {
+    "capacity": {
+      "storage": "1Gi"
+    },
+    "accessModes": [
+      "ReadWriteOnce"
+    ],
+    "persistentVolumeReclaimPolicy": "Recycle",
+    "nfs": {
+      "path": "/mnt/zipkin/mysql",
+      "server": "10.19.137.31"
+    }
+  },
+  "claimRef": {
+    "namespace": "zipkin",
+    "name": "mysql-data"
+  }
+}

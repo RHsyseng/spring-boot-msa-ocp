@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en" data-ng-app="app">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="description" content=""/>
+    <meta name="viewport" content="width=device-width"/>
+
+    <title>Lambda Air</title>
+
+    <!-- PatternFly Styles -->
+    <link href="bower_components/patternfly/dist/css/patternfly.min.css" rel="stylesheet"
+          media="screen, print"/>
+    <link href="bower_components/patternfly/dist/css/patternfly-additions.min.css" rel="stylesheet"
+          media="screen, print"/>
+    <!--jQuery UI Style-->
+    <link rel="stylesheet" href="bower_components/jquery-ui/themes/base/jquery-ui.min.css"/>
+
+    <!--Used by Bootstrap Table at http://bootstrap-table.wenzhixin.net.cn/-->
+    <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="bower_components/bootstrap-table/dist/bootstrap-table.css"/>
+
+    <!-- jQuery -->
+    <script src="bower_components/jquery/dist/jquery.min.js"></script>
+    <!-- jQuery UI for autocomplete -->
+    <script src="bower_components/jquery-ui/jquery-ui.min.js"></script>
+    <!-- Bootstrap -->
+    <script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="bower_components/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"></script>
+    <!-- PatternFly -->
+    <script src="bower_components/patternfly/dist/js/patternfly.min.js"></script>
+    <!-- Application Scripts -->
+    <script src="scripts.js"></script>
+
+    <!--Used by Bootstrap Table at http://bootstrap-table.wenzhixin.net.cn/-->
+    <script src="bower_components/bootstrap-table/dist/bootstrap-table.js"></script>
+    <script src="bower_components/bootstrap-table/dist/locale/bootstrap-table-en-US.js"></script>
+
+    <style>
+        #table thead > tr > th.detail,
+        #table tbody > tr:not(.detail-view) > td:first-of-type {
+          display: none;
+        }
+
+        #table thead > tr > th:nth-child(2),
+        #table tbody > tr:not(.detail-view) > td:nth-child(2) {
+          border-left: none!important;
+        }
+
+        #table thead > tr > th {
+          padding:100px !important;
+        }
+
+        .table-style {
+          white-space: nowrap;
+        }
+
+        .bold {
+          font-weight:bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Lambda Air</h1>
+    <div class="row toolbar-pf" style="border:none;box-shadow:none;">
+        <div class="col-sm-3">
+            <div class="btn-group btn-group-justified" data-toggle="buttons" id="tripTypes">
+                <label class="btn btn-sm btn-default active">
+                    <input id="roundtrip" name="tripType" type="radio"/>Round trip</label>
+                <label class="btn btn-sm btn-default">
+                    <input id="oneway" name="tripType" type="radio"/>One way</label>
+            </div>
+        </div>
+    </div>
+    <form class="toolbar-pf-actions">
+        <div class="row toolbar-pf" style="border:none;box-shadow:none;">
+            <div class="col-sm-2">
+                <input type="text" class="form-control" id="origin" placeholder="Origin"/>
+            </div>
+            <div class="col-sm-2">
+                <input type="text" class="form-control" id="destination" placeholder="Destination"/>
+            </div>
+        </div>
+        <div class="row toolbar-pf" style="border:none;box-shadow:none;">
+            <div class="col-sm-2">
+                <input type="text" class="form-control" id="departureDate" data-provide="datepicker" placeholder="Departure Date"/>
+            </div>
+            <div class="col-sm-2">
+                <input type="text" class="form-control" id="returnDate" data-provide="datepicker" placeholder="Return Date"/>
+            </div>
+        </div>
+    </form>
+    <br/>
+
+    <div id="table-container" class="table-responsive">
+        <table id="table" data-classes="table table-no-bordered table-style" data-detail-view="true" data-detail-formatter="showDetails" data-row-style="rowStyle" style="width: 1%;">
+            <thead>
+                <tr>
+                    <th data-field="price" data-formatter="$%s" data-width="1px">Price</th>
+                    <th data-formatter="departureFormatter" data-width="1px">Departure</th>
+                    <th data-field="return" data-formatter="returnFormatter" data-width="1px">Return</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+<script type="text/javascript">
+    initialize();
+</script>
+
+</body>
+</html>
