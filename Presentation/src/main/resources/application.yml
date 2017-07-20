@@ -16,6 +16,9 @@ zuul:
 
 hystrix.command.PricingCall.execution.isolation.thread.timeoutInMilliseconds: 2000
 
-hystrix.threadpool.SalesThreads.coreSize: 20
-hystrix.threadpool.SalesThreads.maxQueueSize: 200
-hystrix.threadpool.SalesThreads.queueSizeRejectionThreshold: 200
+hystrix:
+  threadpool:
+    SalesThreads:
+      coreSize: 20
+      maxQueueSize: 200
+      queueSizeRejectionThreshold: 200
