@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: sales
+  zipkin:
+    baseUrl: http://zipkin/
+  sleuth:
+    sampler:
+      percentage: 1.0
+
+server:
+  port: 8080
