@@ -20,13 +20,6 @@ public class Controller
 	@Autowired
 	private Tracer tracer;
 
-	@RequestMapping( "/" )
-	public String health()
-	{
-		//For Ribbon pings
-		return "";
-	}
-
 	@RequestMapping( value = "/airports", method = RequestMethod.GET )
 	public Collection<Airport> airports(@RequestParam( value = "filter", required = false ) String filter)
 	{

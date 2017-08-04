@@ -22,13 +22,6 @@ public class Controller
 	@Autowired
 	private Tracer tracer;
 
-	@RequestMapping( "/" )
-	private String health()
-	{
-		//For Ribbon pings
-		return "";
-	}
-
 	@RequestMapping( value = "/price", method = RequestMethod.POST )
 	public Itinerary price(@RequestBody Flight flight)
 	{

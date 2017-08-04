@@ -49,13 +49,6 @@ public class Controller
 	@Autowired
 	private Tracer tracer;
 
-	@RequestMapping( "/" )
-	private String health()
-	{
-		//For Ribbon pings
-		return "";
-	}
-
 	@RequestMapping( value = "/query", method = RequestMethod.GET )
 	public List<Flight> query(@RequestParam( "date" ) String date, @RequestParam( "origin" ) String origin, @RequestParam( "destination" ) String destination)
 	{
