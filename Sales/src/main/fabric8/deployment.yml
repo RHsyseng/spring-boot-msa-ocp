@@ -1,0 +1,12 @@
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - resources:
+            requests:
+              cpu: '400m'
+              memory: '800Mi'
+            limits:
+              cpu: '800m'
+              memory: '1600Mi'

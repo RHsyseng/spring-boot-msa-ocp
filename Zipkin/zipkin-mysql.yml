@@ -170,11 +170,11 @@ objects:
             initialDelaySeconds: 5
           resources:
             limits:
-              cpu: "0"
-              memory: "0"
+              cpu: "400m"
+              memory: "400Mi"
             requests:
-              cpu: "0"
-              memory: "0"
+              cpu: "200m"
+              memory: "200Mi"
     triggers:
     - type: ConfigChange
 - apiVersion: v1
