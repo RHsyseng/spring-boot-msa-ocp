@@ -16,23 +16,37 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
-        <tomcat.version>8.0.36</tomcat.version>
+        <maven.compiler.plugin.version>3.6.1</maven.compiler.plugin.version>
         <fabric8.maven.plugin.version>3.5.22</fabric8.maven.plugin.version>
         <fabric8.resources.requests.memory>64Mi</fabric8.resources.requests.memory>
         <fabric8.generator.from>registry.access.redhat.com/redhat-openjdk-18/openjdk18-openshift</fabric8.generator.from>
+        <spring-boot.bom.version>2</spring-boot.bom.version>
+        <springboot.version>1.4.1.RELEASE</springboot.version>
     </properties>
 
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>1.4.1.RELEASE</version>
-    </parent>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.jboss.snowdrop</groupId>
+                <artifactId>spring-boot-1.4-bom</artifactId>
+                <version>${spring-boot.bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-sleuth</artifactId>
             <version>1.2.1.RELEASE</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+            <version>1.5.6.RELEASE</version>
         </dependency>
 
         <dependency>
@@ -59,22 +73,18 @@
         <dependency>
             <groupId>org.apache.tomcat.embed</groupId>
             <artifactId>tomcat-embed-core</artifactId>
-            <version>${tomcat.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.tomcat.embed</groupId>
             <artifactId>tomcat-embed-el</artifactId>
-            <version>${tomcat.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.tomcat.embed</groupId>
             <artifactId>tomcat-embed-websocket</artifactId>
-            <version>${tomcat.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.tomcat</groupId>
             <artifactId>tomcat-juli</artifactId>
-            <version>${tomcat.version}</version>
         </dependency>
     </dependencies>
 
@@ -83,10 +93,20 @@
             <id>openshift</id>
             <build>
                 <plugins>
-
                     <plugin>
                         <groupId>org.springframework.boot</groupId>
                         <artifactId>spring-boot-maven-plugin</artifactId>
+                        <version>${springboot.version}</version>
+                        <configuration>
+                            <classifier>exec</classifier>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>repackage</goal>
+                                </goals>
+                            </execution>
+                        </executions>
                     </plugin>
 
                     <plugin>
@@ -131,12 +151,20 @@
                                 <goals>
                                     <goal>resource</goal>
                                     <goal>build</goal>
-                                    <goal>helm</goal>
                                 </goals>
                             </execution>
                         </executions>
                     </plugin>
 
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>${maven.compiler.plugin.version}</version>
+                        <configuration>
+                            <source>${java.version}</source>
+                            <target>${java.version}</target>
+                        </configuration>
+                    </plugin>
                 </plugins>
             </build>
         </profile>
