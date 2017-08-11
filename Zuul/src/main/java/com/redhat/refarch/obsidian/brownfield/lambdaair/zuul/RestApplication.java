@@ -24,7 +24,7 @@ public class RestApplication
 		sources.add( RestApplication.class );
 		try
 		{
-			for( Resource resource : new PathMatchingResourcePatternResolver().getResources( "/groovy/*.groovy" ) )
+			for( Resource resource : new PathMatchingResourcePatternResolver().getResources( "file:/groovy/*.groovy" ) )
 			{
 				logger.info( "Found and will load groovy script " + resource.getFilename() );
 				sources.add( resource );
