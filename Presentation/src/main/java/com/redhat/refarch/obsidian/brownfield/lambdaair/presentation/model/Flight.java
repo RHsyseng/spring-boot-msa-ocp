@@ -1,8 +1,5 @@
 package com.redhat.refarch.obsidian.brownfield.lambdaair.presentation.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 
