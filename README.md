@@ -387,7 +387,7 @@ zipkin-mysql   Bound     zipkin-mysql-data   1Gi        RWO           2h
 Attach the persistent volume claim to the deployment config as a directory called *groovy* on the root of the filesystem:
 
 ````
-$ oc volume dc/zuul --add --name=groovy --type=persistentVolumeClaim --claim-name=groovy-claim --mount-path=/groovy*
+$ oc volume dc/zuul --add --name=groovy --type=persistentVolumeClaim --claim-name=groovy-claim --mount-path=/groovy
 deploymentconfig "zuul" updated
 [bmozaffa@middleware-master LambdaAir]$ oc get pods
 NAME                       READY     STATUS              RESTARTS   AGE
