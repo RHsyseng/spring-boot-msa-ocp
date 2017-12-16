@@ -1,6 +1,10 @@
 # Overview
 This repository contains the microservices application described, designed, and documented in the Red Hat reference architecture titled [Spring Boot Microservices on Red Hat OpenShift Container Platform 3](https://access.redhat.com/documentation/en-us/reference_architectures/2017/html/spring_boot_microservices_on_red_hat_openshift_container_platform_3/)
 
+Overview video quickly runs through some features of this reference architecture application:
+
+[![Spring Boot Microservices](http://img.youtube.com/vi/U9Nwjx-Glew/2.jpg)](http://www.youtube.com/watch?v=U9Nwjx-Glew)
+
 # Build and Deployment
 First, clone this repository:
 
